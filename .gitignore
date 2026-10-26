@@ -1,0 +1,22 @@
+# Python bytecode & caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Streamlit local secrets
+.streamlit/secrets.toml
+
+# Temporary video files, sample videos, or model weight caches
+Samples/
+*.mp4
+*.avi
+*.mov
+*.tmp
+.DS_Store
+Thumbs.db
+
