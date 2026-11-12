@@ -20,3 +20,6 @@ Samples/
 .DS_Store
 Thumbs.db
 
+
+# Persisted audit logs
+data/

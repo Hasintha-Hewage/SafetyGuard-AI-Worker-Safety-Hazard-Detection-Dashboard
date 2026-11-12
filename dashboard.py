@@ -12,6 +12,7 @@ import streamlit as st
 from app.config.state_manager import StateManager
 from app.presentation_layer.navigation import render_navigation, render_sidebar_footer
 from app.presentation_layer.theme import apply_custom_theme
+from app.presentation_layer.views.audit_view import render_audit_view
 from app.presentation_layer.views.home_view import render_home_view
 from app.presentation_layer.views.settings_view import render_settings_view
 
@@ -37,6 +38,8 @@ def main() -> None:
         render_home_view()
     elif selected_page == "Settings":
         render_settings_view()
+    elif selected_page == "Audit":
+        render_audit_view()
 
     # 5. Render Bottom Sidebar Footer (Light/Dark Mode Switcher + Researcher Profile Card)
     render_sidebar_footer()

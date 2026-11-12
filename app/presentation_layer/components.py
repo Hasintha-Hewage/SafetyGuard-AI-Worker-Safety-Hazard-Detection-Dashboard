@@ -44,7 +44,7 @@ def synced_slider_and_number(
         if on_update:
             on_update(val)
 
-    col_slider, col_num = st.columns([3, 1])
+    col_slider, col_num = st.columns([3.5, 1], vertical_alignment="bottom")
     with col_slider:
         st.slider(
             label=label,
@@ -58,14 +58,14 @@ def synced_slider_and_number(
         )
     with col_num:
         st.number_input(
-            label=f"{label} (Value)",
+            label=f"{label} value",
             min_value=min_value,
             max_value=max_value,
             step=step,
             format="%.2f",
             key=num_key,
             on_change=_on_num_change,
-            label_visibility="visible",
+            label_visibility="collapsed",
             disabled=disabled,
         )
 

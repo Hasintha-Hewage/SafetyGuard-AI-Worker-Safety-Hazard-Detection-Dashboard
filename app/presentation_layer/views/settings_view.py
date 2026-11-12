@@ -5,12 +5,14 @@ monospace telemetry badges, and Google Material Symbols:
 1. PPE Detection Classes (Toggle On / Off for Safety Helmet, Safety Vest, Gloves, Face Mask)
 2. YOLO Confidence Score Threshold (Synchronized Slider + Number Input)
 3. Decision Layer PPE Severity Weights (Synchronized Slider + Number Input)
-4. UI Theme & Color Customization (Presets + Live Color Pickers)
+4. Audit Log Storage (Save toggle + CSV / SQL selector)
+5. UI Theme & Color Customization (Presets + Live Color Pickers)
 """
 
 import streamlit as st
 from app.config.defaults import PPE_REGISTRY, THEME_PRESETS
 from app.config.state_manager import StateManager
+from app.data_layer.audit_store import AUDIT_BACKENDS, validate_audit_dir
 from app.presentation_layer.components import synced_slider_and_number
 from app.presentation_layer.theme import _clean_html, render_section_header
 
@@ -52,16 +54,16 @@ def render_settings_view() -> None:
                     current_state = enabled_classes.get(key, rule.default_enabled)
                     status_icon = "check_circle" if current_state else "cancel"
                     status_text = "Active" if current_state else "Disabled"
-                    badge_color = "#059669" if current_state else "#64748B"
+                    badge_color = "#2563EB" if current_state else "#64748B"
                     badge_bg = (
-                        "rgba(16,185,129,0.12)"
+                        "rgba(37,99,235,0.12)"
                         if current_state
                         else "rgba(148,163,184,0.14)"
                     )
 
                     st.markdown(
                         _clean_html(f"""
-                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
                             <div style="display:flex; align-items:center; gap:7px;">
                                 <span class="material-symbols-rounded" style="font-size:19px; color:#4F46E5;">{rule.icon}</span>
                                 <span style="font-weight:700; font-size:13px;">{rule.label}</span>
@@ -148,12 +150,74 @@ def render_settings_view() -> None:
         )
 
     # ---------------------------------------------------------
-    # SECTION 4: UI THEME COLORS
+    # SECTION 4: AUDIT LOG PERSISTENCE (SAVE TOGGLE + BACKEND)
+    # ---------------------------------------------------------
+    with st.container(border=True):
+        render_section_header(
+            icon_name="save",
+            title="4. Audit Log Storage",
+            subtitle="Save every incident to disk so the Audit Log survives restarts. Choose CSV or SQL (SQLite).",
+        )
+
+        def _on_save_toggle() -> None:
+            StateManager.set_audit_save_enabled(st.session_state["toggle_audit_save"])
+
+        def _on_backend_change() -> None:
+            StateManager.set_audit_backend(st.session_state["sel_audit_backend"])
+
+        def _on_dir_change() -> None:
+            StateManager.set_audit_dir(st.session_state["txt_audit_dir"])
+            # Show the resolved absolute path back in the field
+            st.session_state["txt_audit_dir"] = StateManager.get_audit_dir()
+
+        st.toggle(
+            "Save audit log",
+            value=StateManager.is_audit_save_enabled(),
+            key="toggle_audit_save",
+            on_change=_on_save_toggle,
+            help="When on, each detected incident is written to the selected storage.",
+        )
+
+        if StateManager.is_audit_save_enabled():
+            backends = list(AUDIT_BACKENDS.keys())
+            st.selectbox(
+                "Storage format",
+                options=backends,
+                index=backends.index(StateManager.get_audit_backend()),
+                key="sel_audit_backend",
+                on_change=_on_backend_change,
+            )
+            st.text_input(
+                "Save folder",
+                value=StateManager.get_audit_dir(),
+                key="txt_audit_dir",
+                on_change=_on_dir_change,
+                help="Full absolute path, e.g. D:\\AuditLogs. The folder is created if it "
+                "doesn't exist. Press Enter to apply.",
+            )
+            dir_error = validate_audit_dir(StateManager.get_audit_dir())
+            if dir_error:
+                st.error(
+                    f"Folder is not writable, incidents will not be saved: {dir_error}",
+                    icon=":material/folder_off:",
+                )
+            store = StateManager.current_audit_store()
+            st.caption(f"Saving to `{store.location}`")
+            if StateManager.get_audit_error():
+                st.error(
+                    f"Could not save audit log: {StateManager.get_audit_error()}",
+                    icon=":material/error:",
+                )
+        else:
+            st.caption("Saving is off — the Audit Log only keeps this session's events in memory.")
+
+    # ---------------------------------------------------------
+    # SECTION 5: UI THEME COLORS
     # ---------------------------------------------------------
     with st.container(border=True):
         render_section_header(
             icon_name="palette",
-            title="4. UI Theme & Color Customization",
+            title="5. UI Theme & Color Customization",
             subtitle="Select a modern theme preset or customize individual surface, sidebar, and accent colors.",
         )
 
@@ -177,34 +241,35 @@ def render_settings_view() -> None:
         )
 
         theme_colors = StateManager.get_theme_colors()
-        c1, c2, c3, c4, c5, c6 = st.columns(6)
-
-        with c1:
+        row1_c1, row1_c2, row1_c3 = st.columns(3)
+        with row1_c1:
             new_primary = st.color_picker(
                 "Primary Brand",
                 value=theme_colors.get("primary_color", "#4F46E5"),
             )
-        with c2:
+        with row1_c2:
             new_sidebar = st.color_picker(
                 "Sidebar BG",
                 value=theme_colors.get("sidebar_bg_color", "#FFFFFF"),
             )
-        with c3:
+        with row1_c3:
             new_bg = st.color_picker(
                 "Canvas BG",
                 value=theme_colors.get("background_color", "#F8FAFC"),
             )
-        with c4:
+
+        row2_c1, row2_c2, row2_c3 = st.columns(3)
+        with row2_c1:
             new_sec_bg = st.color_picker(
                 "Card Surface",
                 value=theme_colors.get("secondary_bg_color", "#FFFFFF"),
             )
-        with c5:
+        with row2_c2:
             new_text = st.color_picker(
                 "Typography",
                 value=theme_colors.get("text_color", "#0F172A"),
             )
-        with c6:
+        with row2_c3:
             new_accent = st.color_picker(
                 "Metric Accent",
                 value=theme_colors.get("accent_color", "#4F46E5"),

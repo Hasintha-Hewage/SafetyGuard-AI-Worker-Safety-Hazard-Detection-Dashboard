@@ -4,6 +4,7 @@ To add a new PPE class or theme preset in the future, simply extend the dictiona
 """
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, List, Optional
 
 # Model & Video Defaults
@@ -11,13 +12,19 @@ DEFAULT_MODEL_PATH = (
     "E://Desktop 7-18-2026//Downloads//PPE//Model//Colab Model//"
     "sh17_ppe_detection//yolov8s_sh17//weights//best.pt"
 )
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SAMPLE_VIDEOS = [
-    "Samples/Construction.mp4",
-    "Construction.mp4",
-    "Samples/Example.mp4",
-    "Samples/Video.mp4",
+    str(PROJECT_ROOT / "Samples" / "Construction.mp4"),
+    str(PROJECT_ROOT / "Construction.mp4"),
+    str(PROJECT_ROOT / "Samples" / "Example.mp4"),
+    str(PROJECT_ROOT / "Samples" / "Video.mp4"),
 ]
 DEFAULT_CONFIDENCE = 0.40
+
+# YOLO inference resolution (smaller = faster; 640 is the YOLOv8 training default)
+INFERENCE_IMAGE_SIZE = 640
+# Refresh the heavier HTML widgets (KPI cards, footer, header) every N frames
+UI_REFRESH_EVERY_N_FRAMES = 5
 
 
 @dataclass
@@ -96,40 +103,40 @@ DEFAULT_THRESHOLDS: Dict[str, float] = {
     "LOW": 0.10,
 }
 
-# Dribbble-Inspired Modern Sidebar Themes (Light & Dark Variations)
-DEFAULT_THEME_NAME = "Modern Dark (Obsidian Sidebar)"
+# Modern 2-Tone & 3-Tone Blue UI Theme Presets
+DEFAULT_THEME_NAME = "Cobalt Modern Dark (2-Tone Slate)"
 
 THEME_PRESETS: Dict[str, Dict[str, str]] = {
-    "Modern Dark (Obsidian Sidebar)": {
-        "primary_color": "#6366F1",
-        "background_color": "#0B0D13",
-        "secondary_bg_color": "#131620",
-        "sidebar_bg_color": "#131620",
+    "Cobalt Modern Dark (2-Tone Slate)": {
+        "primary_color": "#3B82F6",
+        "background_color": "#0B0F17",
+        "secondary_bg_color": "#111827",
+        "sidebar_bg_color": "#111827",
         "text_color": "#F8FAFC",
-        "accent_color": "#818CF8",
+        "accent_color": "#60A5FA",
     },
-    "Modern Light (Clean Sidebar)": {
-        "primary_color": "#4F46E5",
+    "Cobalt Enterprise Light (3-Tone)": {
+        "primary_color": "#2563EB",
         "background_color": "#F8FAFC",
         "secondary_bg_color": "#FFFFFF",
         "sidebar_bg_color": "#FFFFFF",
         "text_color": "#0F172A",
-        "accent_color": "#4F46E5",
+        "accent_color": "#0EA5E9",
     },
-    "Cobalt Enterprise Light": {
-        "primary_color": "#2563EB",
-        "background_color": "#F4F7FB",
-        "secondary_bg_color": "#FFFFFF",
-        "sidebar_bg_color": "#FFFFFF",
-        "text_color": "#0F172A",
-        "accent_color": "#2563EB",
-    },
-    "Emerald Slate Dark": {
-        "primary_color": "#10B981",
+    "Deep Sapphire Dark (3-Tone)": {
+        "primary_color": "#6366F1",
         "background_color": "#090D16",
         "secondary_bg_color": "#111827",
         "sidebar_bg_color": "#111827",
         "text_color": "#F9FAFB",
-        "accent_color": "#34D399",
+        "accent_color": "#818CF8",
+    },
+    "Nordic Ice Blue Light (2-Tone)": {
+        "primary_color": "#0284C7",
+        "background_color": "#F0F6FC",
+        "secondary_bg_color": "#FFFFFF",
+        "sidebar_bg_color": "#FFFFFF",
+        "text_color": "#0F172A",
+        "accent_color": "#38BDF8",
     },
 }

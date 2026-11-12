@@ -5,8 +5,7 @@ Implements the exact Stitch UI Left Sidebar Navigation and Top System Header Bar
 - MAIN MENU + LIVE badge with:
   1. Home Dashboard (CV-01)
   2. Settings
-  3. YOLOv8 Weights (v8s-pt)
-  4. Incident Audit Log
+  3. Incident Audit Log
 - Bottom Appearance (Light / Dark) segmented switcher and MSc Research CORE Profile Card
 - Top System Header Bar with EDGE ENGINE RUNNING status pill and Export Telemetry action
 """
@@ -23,7 +22,7 @@ def render_navigation() -> str:
     Returns the active page name ('Home' or 'Settings').
     """
     current_page = st.session_state.get("current_page", "Home")
-    active_nav = st.session_state.get("active_nav_item", current_page)
+    active_nav = current_page
 
     # 1. Top Workspace Brand Header + MAIN MENU + LIVE Badge
     st.sidebar.markdown(
@@ -72,25 +71,13 @@ def render_navigation() -> str:
         st.rerun()
 
     if st.sidebar.button(
-        "YOLOv8 Weights   ·   v8s-pt",
-        icon=":material/deployed_code:",
-        key="side_nav_weights",
-        type="primary" if active_nav == "Weights" else "secondary",
-        use_container_width=True,
-    ):
-        st.session_state["current_page"] = "Settings"
-        st.session_state["active_nav_item"] = "Weights"
-        st.rerun()
-
-    if st.sidebar.button(
         "Incident Audit Log",
         icon=":material/history:",
         key="side_nav_audit",
         type="primary" if active_nav == "Audit" else "secondary",
         use_container_width=True,
     ):
-        st.session_state["current_page"] = "Home"
-        st.session_state["active_nav_item"] = "Audit"
+        st.session_state["current_page"] = "Audit"
         st.rerun()
 
     # 3. Render Top System Header Bar in Main Workspace
@@ -134,7 +121,7 @@ def render_sidebar_footer() -> None:
     - Segmented Appearance (Light / Dark) Switcher
     - MSc Research CORE Profile Card
     """
-    st.sidebar.markdown("<div style='height: 140px;'></div>", unsafe_allow_html=True)
+    st.sidebar.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
     st.sidebar.markdown("---")
     st.sidebar.markdown(
         '<div class="sb-menu-header"><span class="sb-section-label">Appearance</span></div>',
@@ -158,7 +145,7 @@ def render_sidebar_footer() -> None:
             type="primary" if not is_dark else "secondary",
             use_container_width=True,
             on_click=_switch_to_preset,
-            args=("Modern Light (Clean Sidebar)",),
+            args=("Cobalt Enterprise Light (3-Tone)",),
         )
 
     with col_dark:
@@ -169,7 +156,7 @@ def render_sidebar_footer() -> None:
             type="primary" if is_dark else "secondary",
             use_container_width=True,
             on_click=_switch_to_preset,
-            args=("Modern Dark (Obsidian Sidebar)",),
+            args=("Cobalt Modern Dark (2-Tone Slate)",),
         )
 
     # Researcher Profile Card matching Stitch UI

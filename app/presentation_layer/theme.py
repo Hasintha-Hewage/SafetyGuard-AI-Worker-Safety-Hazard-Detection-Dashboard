@@ -63,13 +63,27 @@ def apply_custom_theme() -> None:
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 
     <style>
-        /* Hide default Streamlit top header decoration to allow custom Top Header Bar */
+        /* Prevent Streamlit's default header toolbar from overlapping the custom Top Header Bar */
         header[data-testid="stHeader"] {{
             background: transparent !important;
-            height: 2rem !important;
+            height: 0px !important;
+            min-height: 0px !important;
+            padding: 0 !important;
+            pointer-events: none !important;
+        }}
+        [data-testid="stToolbar"],
+        [data-testid="stDecoration"] {{
+            display: none !important;
+            visibility: hidden !important;
+        }}
+        [data-testid="stSidebarCollapsedControl"] {{
+            pointer-events: auto !important;
+            top: 0.75rem !important;
+            left: 0.75rem !important;
+            z-index: 9999 !important;
         }}
         .block-container {{
-            padding-top: 0.6rem !important;
+            padding-top: 1.5rem !important;
             padding-bottom: 2.5rem !important;
             padding-left: 2rem !important;
             padding-right: 2rem !important;
@@ -223,6 +237,20 @@ def apply_custom_theme() -> None:
             box-shadow: none !important;
             margin-bottom: 2px !important;
         }}
+        /* Left-align icon + label inside sidebar nav buttons (Streamlit centers inner wrappers by default) */
+        [data-testid="stSidebar"] .stButton > button > div,
+        [data-testid="stSidebar"] .stButton > button [data-testid="stMarkdownContainer"],
+        [data-testid="stSidebar"] .stButton > button [data-testid="stMarkdownContainer"] p {{
+            justify-content: flex-start !important;
+            text-align: left !important;
+            width: 100% !important;
+            margin: 0 !important;
+        }}
+        [data-testid="stSidebar"] .stButton > button > div {{
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.6rem !important;
+        }}
         [data-testid="stSidebar"] .stButton > button * {{
             color: {sb_muted} !important;
         }}
@@ -287,7 +315,7 @@ def apply_custom_theme() -> None:
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background-color: #10B981;
+            background-color: #38BDF8;
             border: 2px solid {sec_bg};
         }}
         .sb-profile-name {{
@@ -326,12 +354,16 @@ def apply_custom_theme() -> None:
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
         }}
         .stitch-header-left {{
             display: flex;
             align-items: center;
             gap: 12px;
+            flex: 1 1 320px;
+            min-width: 260px;
         }}
         .stitch-header-icon {{
             width: 34px;
@@ -343,6 +375,7 @@ def apply_custom_theme() -> None:
             align-items: center;
             justify-content: center;
             color: {primary} !important;
+            flex-shrink: 0;
         }}
         .stitch-header-icon .material-symbols-rounded {{
             color: {primary} !important;
@@ -365,6 +398,7 @@ def apply_custom_theme() -> None:
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }}
         .edge-running-pill {{
             display: inline-flex;
@@ -372,18 +406,18 @@ def apply_custom_theme() -> None:
             gap: 7px;
             padding: 5px 11px;
             border-radius: 9999px;
-            background: rgba(16, 185, 129, 0.10);
-            border: 1px solid rgba(16, 185, 129, 0.30);
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.32);
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
             font-weight: 600;
-            color: #059669 !important;
+            color: #2563EB !important;
         }}
         .edge-dot {{
             width: 7px;
             height: 7px;
             border-radius: 50%;
-            background-color: #10B981;
+            background-color: #3B82F6;
         }}
         .notif-btn {{
             position: relative;
@@ -404,7 +438,7 @@ def apply_custom_theme() -> None:
             width: 7px;
             height: 7px;
             border-radius: 50%;
-            background: #F97316;
+            background: #38BDF8;
         }}
         .export-pill-btn {{
             display: inline-flex;
@@ -432,6 +466,13 @@ def apply_custom_theme() -> None:
             border-radius: 16px !important;
             padding: 1.1rem !important;
             box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+        }}
+
+        /* Ensure nested bordered cards inside containers do not over-pad or crowd child elements */
+        [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlockBorderWrapper"] {{
+            padding: 0.75rem 0.85rem !important;
+            border-radius: 12px !important;
+            margin-bottom: 0.5rem !important;
         }}
 
         /* Main Workspace Buttons (Start / Stop Monitoring, Reset, etc.) */
@@ -601,11 +642,68 @@ def apply_custom_theme() -> None:
             fill: {muted_text} !important;
         }}
 
+        /* =========================================================
+           SLIDER & TOGGLE THEME STYLING (BLUE THEME OVERRIDES)
+           ========================================================= */
+        /* Slider Thumb Knob */
+        [data-testid="stSlider"] div[role="slider"],
+        .stSlider div[role="slider"],
+        div[class*="efbyxod3"] {{
+            background-color: {primary} !important;
+            border: 2px solid {sec_bg} !important;
+            box-shadow: 0 0 10px {primary}66 !important;
+        }}
+        [data-testid="stSlider"] div[role="slider"]:hover,
+        [data-testid="stSlider"] div[role="slider"]:focus,
+        [data-testid="stSlider"] div[role="slider"]:active,
+        div[class*="efbyxod3"]:hover,
+        div[class*="efbyxod3"]:focus {{
+            box-shadow: 0 0 14px {primary}AA !important;
+        }}
+
+        /* Slider Thumb Floating Value Tooltip (0.40, 0.30, etc.) */
+        [data-testid="stSliderThumbValue"],
+        [data-testid="stSlider"] [data-testid="stSliderThumbValue"],
+        .stSlider [data-testid="stSliderThumbValue"],
+        div[class*="efbyxod4"] {{
+            color: {primary} !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-weight: 700 !important;
+        }}
+
+        /* Toggle Button (Active / Checked State) */
+        [data-testid="stCheckbox"]:has(input:checked) div[class*="e1ap2qgk7"],
+        .stCheckbox:has(input:checked) div[class*="e1ap2qgk7"],
+        [data-testid="stToggle"]:has(input:checked) div[class*="e1ap2qgk7"],
+        .stToggle:has(input:checked) div[class*="e1ap2qgk7"],
+        [data-testid="stCheckbox"] input:checked ~ div,
+        [data-testid="stToggle"] input:checked ~ div,
+        [data-testid="stCheckbox"] input:checked + div,
+        div[class*="e1ap2qgk7"]:has(div[style*="translateX"]) {{
+            background-color: {primary} !important;
+            box-shadow: 0 0 10px {primary}55 !important;
+        }}
+
+        /* Toggle Knob Circle (ensure clean white contrast inside active track) */
+        div[class*="e1ap2qgk8"] {{
+            background-color: #FFFFFF !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+        }}
+
         /* Slider Min/Max Tick Bar Labels */
         [data-testid="stTickBarMin"],
         [data-testid="stTickBarMax"] {{
             color: {muted_text} !important;
             font-family: 'JetBrains Mono', monospace !important;
+        }}
+        .slider-custom-ticks {{
+            display: flex;
+            justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: {muted_text};
+            margin-top: 4px;
+            padding: 0 4px;
         }}
 
         /* Color Picker Swatches (Visible dark border in Light Mode so white/light swatches stand out) */
@@ -632,11 +730,14 @@ def apply_custom_theme() -> None:
             justify-content: space-between;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
             height: 100%;
+            min-height: 125px;
+            overflow: hidden;
         }}
         .kpi-card-top {{
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 8px;
         }}
         .kpi-label {{
             font-family: 'JetBrains Mono', monospace;
@@ -653,12 +754,14 @@ def apply_custom_theme() -> None:
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }}
         .kpi-value-row {{
             margin-top: 12px;
             display: flex;
             align-items: baseline;
             gap: 8px;
+            flex-wrap: wrap;
         }}
         .kpi-footer {{
             margin-top: 10px;
@@ -667,6 +770,8 @@ def apply_custom_theme() -> None:
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 4px;
             font-size: 11px;
             color: {muted_text} !important;
         }}

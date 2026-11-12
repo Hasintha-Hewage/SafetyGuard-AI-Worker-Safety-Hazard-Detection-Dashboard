@@ -6,6 +6,13 @@ and synchronized widget helpers (Slider <-> Number Input) for weights and thresh
 
 from typing import Any, Dict, List
 import streamlit as st
+from app.data_layer.audit_store import (
+    AUDIT_BACKENDS,
+    DEFAULT_AUDIT_BACKEND,
+    DEFAULT_AUDIT_DIR,
+    get_audit_store,
+    resolve_audit_dir,
+)
 from app.config.defaults import (
     DEFAULT_CONFIDENCE,
     DEFAULT_MODEL_PATH,
@@ -14,6 +21,8 @@ from app.config.defaults import (
     PPE_REGISTRY,
     THEME_PRESETS,
 )
+
+MAX_AUDIT_LOGS = 5000  # cap on the in-session audit history
 
 
 DEFAULT_INCIDENT_LOGS: List[Dict[str, Any]] = [
@@ -63,6 +72,9 @@ class StateManager:
                 st.session_state["dark_default_migrated"] = True
             if "incident_logs" not in st.session_state:
                 st.session_state["incident_logs"] = list(DEFAULT_INCIDENT_LOGS)
+            st.session_state.setdefault("audit_save_enabled", True)
+            st.session_state.setdefault("audit_backend", DEFAULT_AUDIT_BACKEND)
+            st.session_state.setdefault("audit_dir", DEFAULT_AUDIT_DIR)
             return
 
         st.session_state["current_page"] = "Home"
@@ -88,6 +100,11 @@ class StateManager:
         # Initialize Live Incident Logs
         st.session_state["incident_logs"] = list(DEFAULT_INCIDENT_LOGS)
 
+        # Audit log persistence (default: ON, CSV)
+        st.session_state["audit_save_enabled"] = True
+        st.session_state["audit_backend"] = DEFAULT_AUDIT_BACKEND
+        st.session_state["audit_dir"] = DEFAULT_AUDIT_DIR
+
         st.session_state["app_initialized"] = True
 
     @staticmethod
@@ -104,10 +121,13 @@ class StateManager:
         st.session_state["theme_preset"] = DEFAULT_THEME_NAME
         st.session_state["theme_colors"] = dict(THEME_PRESETS[DEFAULT_THEME_NAME])
         st.session_state["incident_logs"] = list(DEFAULT_INCIDENT_LOGS)
+        st.session_state["audit_save_enabled"] = True
+        st.session_state["audit_backend"] = DEFAULT_AUDIT_BACKEND
+        st.session_state["audit_dir"] = DEFAULT_AUDIT_DIR
 
         keys_to_remove = [
             k for k in st.session_state.keys()
-            if k.startswith(("slider_", "num_", "toggle_", "home_slider_"))
+            if k.startswith(("slider_", "num_", "toggle_", "sel_", "txt_", "home_slider_"))
         ]
         for k in keys_to_remove:
             del st.session_state[k]
@@ -162,3 +182,82 @@ class StateManager:
         logs = st.session_state.get("incident_logs", list(DEFAULT_INCIDENT_LOGS))
         logs.insert(0, entry)
         st.session_state["incident_logs"] = logs[:15]
+
+        # Full, persistent-for-the-session history for the Audit Log page (oldest first)
+        audit = st.session_state.setdefault("audit_logs", [])
+        audit.append(entry)
+        if len(audit) > MAX_AUDIT_LOGS:
+            del audit[: len(audit) - MAX_AUDIT_LOGS]
+
+        # Persist to the selected backend (CSV / SQLite) when saving is enabled
+        if StateManager.is_audit_save_enabled():
+            try:
+                StateManager.current_audit_store().append(entry)
+                st.session_state["audit_save_error"] = None
+            except Exception as exc:  # never break live monitoring on a storage error
+                st.session_state["audit_save_error"] = str(exc)
+
+    @staticmethod
+    def is_audit_save_enabled() -> bool:
+        return bool(st.session_state.get("audit_save_enabled", True))
+
+    @staticmethod
+    def set_audit_save_enabled(enabled: bool) -> None:
+        st.session_state["audit_save_enabled"] = bool(enabled)
+
+    @staticmethod
+    def get_audit_backend() -> str:
+        backend = st.session_state.get("audit_backend", DEFAULT_AUDIT_BACKEND)
+        return backend if backend in AUDIT_BACKENDS else DEFAULT_AUDIT_BACKEND
+
+    @staticmethod
+    def set_audit_backend(backend: str) -> None:
+        if backend in AUDIT_BACKENDS:
+            st.session_state["audit_backend"] = backend
+
+    @staticmethod
+    def get_audit_dir() -> str:
+        return st.session_state.get("audit_dir", DEFAULT_AUDIT_DIR)
+
+    @staticmethod
+    def set_audit_dir(directory: str) -> None:
+        # Always stored as an absolute path (relative input is resolved from the project root)
+        st.session_state["audit_dir"] = (
+            str(resolve_audit_dir(directory)) if directory.strip() else DEFAULT_AUDIT_DIR
+        )
+
+    @staticmethod
+    def current_audit_store():
+        """Store for the currently selected format and folder."""
+        return get_audit_store(StateManager.get_audit_backend(), StateManager.get_audit_dir())
+
+    @staticmethod
+    def get_audit_error() -> Any:
+        return st.session_state.get("audit_save_error")
+
+    @staticmethod
+    def get_audit_logs() -> List[Dict[str, Any]]:
+        """
+        Audit history, newest first. When saving is enabled this reads the selected
+        persistent store (so history survives restarts); otherwise session memory.
+        """
+        if StateManager.is_audit_save_enabled():
+            try:
+                return list(
+                    reversed(
+                        StateManager.current_audit_store().load(MAX_AUDIT_LOGS)
+                    )
+                )
+            except Exception as exc:
+                st.session_state["audit_save_error"] = str(exc)
+        return list(reversed(st.session_state.get("audit_logs", [])))
+
+    @staticmethod
+    def clear_audit_logs() -> None:
+        """Clear session history and the selected persistent store."""
+        st.session_state["audit_logs"] = []
+        if StateManager.is_audit_save_enabled():
+            try:
+                StateManager.current_audit_store().clear()
+            except Exception as exc:
+                st.session_state["audit_save_error"] = str(exc)
