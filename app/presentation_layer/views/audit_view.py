@@ -6,6 +6,7 @@ filtering, summary metrics, CSV export and clear-history controls.
 
 import pandas as pd
 import streamlit as st
+from app.config.defaults import COMPLIANT_COLOR, VIOLATION_COLOR
 from app.config.state_manager import StateManager
 from app.presentation_layer.theme import render_section_header
 
@@ -100,8 +101,16 @@ def render_audit_view() -> None:
         filtered = filtered[mask]
 
     st.caption(f"Showing {len(filtered)} of {total} events (newest first)")
+    def _row_style(row: pd.Series):
+        color = (
+            f"color: {VIOLATION_COLOR}; font-weight: 600"
+            if row["Violation"]
+            else f"color: {COMPLIANT_COLOR}"
+        )
+        return [color if col == "Status" else "" for col in row.index]
+
     st.dataframe(
-        filtered,
+        filtered.style.apply(_row_style, axis=1),
         use_container_width=True,
         hide_index=True,
         column_config={

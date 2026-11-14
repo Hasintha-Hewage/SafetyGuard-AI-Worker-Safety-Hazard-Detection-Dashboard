@@ -476,7 +476,8 @@ def apply_custom_theme() -> None:
         }}
 
         /* Main Workspace Buttons (Start / Stop Monitoring, Reset, etc.) */
-        [data-testid="stMain"] .stButton > button {{
+        [data-testid="stMain"] .stButton > button,
+        [data-testid="stMain"] .stDownloadButton > button {{
             border-radius: 11px !important;
             font-weight: 600 !important;
             font-size: 12px !important;
@@ -486,44 +487,92 @@ def apply_custom_theme() -> None:
             background-color: {sec_bg} !important;
             color: {text} !important;
         }}
-        [data-testid="stMain"] .stButton > button * {{
+        [data-testid="stMain"] .stButton > button *,
+        [data-testid="stMain"] .stDownloadButton > button * {{
             color: {text} !important;
         }}
         [data-testid="stMain"] .stButton > button:hover,
+        [data-testid="stMain"] .stDownloadButton > button:hover,
         [data-testid="stMain"] .stButton > button:focus,
-        [data-testid="stMain"] .stButton > button:active {{
+        [data-testid="stMain"] .stDownloadButton > button:focus,
+        [data-testid="stMain"] .stButton > button:active,
+        [data-testid="stMain"] .stDownloadButton > button:active {{
             background-color: {btn_hover_bg} !important;
             border-color: {primary} !important;
             color: {btn_hover_text} !important;
         }}
         [data-testid="stMain"] .stButton > button:hover *,
+        [data-testid="stMain"] .stDownloadButton > button:hover *,
         [data-testid="stMain"] .stButton > button:focus *,
-        [data-testid="stMain"] .stButton > button:active * {{
+        [data-testid="stMain"] .stDownloadButton > button:focus *,
+        [data-testid="stMain"] .stButton > button:active *,
+        [data-testid="stMain"] .stDownloadButton > button:active * {{
             color: {btn_hover_text} !important;
         }}
 
         /* Primary Action Button (Start Monitoring) */
-        [data-testid="stMain"] .stButton > button[kind="primary"] {{
+        [data-testid="stMain"] .stButton > button[kind="primary"],
+        [data-testid="stMain"] .stDownloadButton > button[kind="primary"] {{
             background-color: {primary} !important;
             color: #FFFFFF !important;
             border-color: {primary} !important;
             box-shadow: 0 4px 12px {primary}33 !important;
         }}
-        [data-testid="stMain"] .stButton > button[kind="primary"] * {{
+        [data-testid="stMain"] .stButton > button[kind="primary"] *,
+        [data-testid="stMain"] .stDownloadButton > button[kind="primary"] * {{
             color: #FFFFFF !important;
         }}
         [data-testid="stMain"] .stButton > button[kind="primary"]:hover,
+        [data-testid="stMain"] .stDownloadButton > button[kind="primary"]:hover,
         [data-testid="stMain"] .stButton > button[kind="primary"]:focus,
-        [data-testid="stMain"] .stButton > button[kind="primary"]:active {{
+        [data-testid="stMain"] .stDownloadButton > button[kind="primary"]:focus,
+        [data-testid="stMain"] .stButton > button[kind="primary"]:active,
+        [data-testid="stMain"] .stDownloadButton > button[kind="primary"]:active {{
             background-color: {primary} !important;
             filter: brightness(1.08) !important;
             color: #FFFFFF !important;
             border-color: {primary} !important;
         }}
         [data-testid="stMain"] .stButton > button[kind="primary"]:hover *,
+        [data-testid="stMain"] .stDownloadButton > button[kind="primary"]:hover *,
         [data-testid="stMain"] .stButton > button[kind="primary"]:focus *,
-        [data-testid="stMain"] .stButton > button[kind="primary"]:active * {{
+        [data-testid="stMain"] .stDownloadButton > button[kind="primary"]:focus *,
+        [data-testid="stMain"] .stButton > button[kind="primary"]:active *,
+        [data-testid="stMain"] .stDownloadButton > button[kind="primary"]:active * {{
             color: #FFFFFF !important;
+        }}
+
+        /* Disabled buttons stay readable in both themes */
+        [data-testid="stMain"] .stButton > button:disabled,
+        [data-testid="stMain"] .stDownloadButton > button:disabled {{
+            background-color: {subtle_bg} !important;
+            border-color: {card_border} !important;
+            opacity: 0.55 !important;
+            cursor: not-allowed !important;
+        }}
+        [data-testid="stMain"] .stButton > button:disabled *,
+        [data-testid="stMain"] .stDownloadButton > button:disabled * {{
+            color: {muted_text} !important;
+        }}
+
+        /* Dropdown menus (selectbox / multiselect): readable hover in light + dark */
+        [data-baseweb="popover"] ul[role="listbox"],
+        [data-baseweb="popover"] [data-baseweb="menu"] {{
+            background-color: {sec_bg} !important;
+            border: 1px solid {card_border} !important;
+        }}
+        [data-baseweb="popover"] li[role="option"],
+        [data-baseweb="popover"] li[role="option"] * {{
+            background-color: transparent !important;
+            color: {text} !important;
+        }}
+        [data-baseweb="popover"] li[role="option"]:hover,
+        [data-baseweb="popover"] li[role="option"][aria-selected="true"] {{
+            background-color: {btn_hover_bg} !important;
+        }}
+        [data-baseweb="popover"] li[role="option"]:hover *,
+        [data-baseweb="popover"] li[role="option"][aria-selected="true"] * {{
+            color: {btn_hover_text} !important;
         }}
 
         /* Styled File Uploader Dropzone & Upload Button inside Stream Controls */

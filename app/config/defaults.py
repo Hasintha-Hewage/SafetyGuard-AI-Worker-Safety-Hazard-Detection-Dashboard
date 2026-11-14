@@ -5,7 +5,7 @@ To add a new PPE class or theme preset in the future, simply extend the dictiona
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 # Model & Video Defaults
 DEFAULT_MODEL_PATH = (
@@ -102,6 +102,36 @@ DEFAULT_THRESHOLDS: Dict[str, float] = {
     "MEDIUM": 0.30,
     "LOW": 0.10,
 }
+
+# Semantic alert colors (error = red, warning = amber, safe = green)
+ALERT_STYLES: Dict[str, Dict[str, str]] = {
+    "HIGH": {"label": "HIGH ALERT", "hex": "#DC2626", "icon": "error"},
+    "MEDIUM": {"label": "MEDIUM ALERT", "hex": "#F59E0B", "icon": "warning"},
+    "LOW": {"label": "LOW ALERT", "hex": "#EAB308", "icon": "info"},
+    "SAFE": {"label": "SAFE", "hex": "#16A34A", "icon": "check_circle"},
+}
+VIOLATION_COLOR = ALERT_STYLES["HIGH"]["hex"]   # red
+COMPLIANT_COLOR = ALERT_STYLES["SAFE"]["hex"]   # green
+
+
+def hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:
+    h = hex_color.lstrip("#")
+    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+
+
+def hex_to_bgr(hex_color: str) -> Tuple[int, int, int]:
+    """OpenCV draws in BGR order."""
+    r, g, b = hex_to_rgb(hex_color)
+    return b, g, r
+
+
+def alert_style_for(alert_level: str) -> Dict[str, str]:
+    """Look up the style for a label such as 'HIGH ALERT' (defaults to SAFE)."""
+    for key in ("HIGH", "MEDIUM", "LOW"):
+        if key in alert_level:
+            return ALERT_STYLES[key]
+    return ALERT_STYLES["SAFE"]
+
 
 # Modern 2-Tone & 3-Tone Blue UI Theme Presets
 DEFAULT_THEME_NAME = "Cobalt Modern Dark (2-Tone Slate)"

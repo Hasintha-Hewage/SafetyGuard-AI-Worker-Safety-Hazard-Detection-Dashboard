@@ -5,7 +5,7 @@ compliance percentages, and class counts using dynamic weights, enabled PPE clas
 """
 
 from typing import Any, Dict, List, Optional
-from app.config.defaults import DEFAULT_THRESHOLDS, PPE_REGISTRY
+from app.config.defaults import ALERT_STYLES, DEFAULT_THRESHOLDS, PPE_REGISTRY, hex_to_bgr
 
 
 def is_inside_person(person_box: List[float], item_box: List[float]) -> bool:
@@ -149,17 +149,15 @@ def evaluate_frame_safety(
         )
 
     if frame_max_score >= high:
-        alert_level = "HIGH ALERT"
-        color = (216, 78, 29)  # Deep Royal Blue (RGB: #1D4ED8)
+        level = "HIGH"
     elif frame_max_score >= medium:
-        alert_level = "MEDIUM ALERT"
-        color = (235, 99, 37)  # Vibrant Cobalt Blue (RGB: #2563EB)
+        level = "MEDIUM"
     elif frame_max_score >= low:
-        alert_level = "LOW ALERT"
-        color = (248, 189, 56)  # Sky Blue (RGB: #38BDF8)
+        level = "LOW"
     else:
-        alert_level = "SAFE"
-        color = (235, 165, 14)  # Crisp Cyan Blue (RGB: #0EA5E9)
+        level = "SAFE"
+    alert_level = ALERT_STYLES[level]["label"]
+    color = hex_to_bgr(ALERT_STYLES[level]["hex"])  # BGR for OpenCV drawing
 
     total_workers = len(persons)
     compliance_pct = (

@@ -15,7 +15,14 @@ from datetime import datetime
 import time
 from typing import Any, Dict, List, Optional
 import streamlit as st
-from app.config.defaults import PPE_REGISTRY, UI_REFRESH_EVERY_N_FRAMES
+from app.config.defaults import (
+    COMPLIANT_COLOR,
+    PPE_REGISTRY,
+    UI_REFRESH_EVERY_N_FRAMES,
+    VIOLATION_COLOR,
+    alert_style_for,
+    hex_to_rgb,
+)
 from app.config.state_manager import StateManager
 from app.data_layer.video_stream import open_video_source, release_video_source
 from app.decision_layer.safety_evaluator import evaluate_frame_safety
@@ -25,6 +32,12 @@ from app.detection_layer.detector import (
     load_yolo_model,
     run_inference,
 )
+
+
+def _rgba(hex_color: str, alpha: float) -> str:
+    """Convert '#RRGGBB' into a CSS rgba() string."""
+    r, g, b = hex_to_rgb(hex_color)
+    return f"rgba({r},{g},{b},{alpha})"
 
 
 def _html_fragment(markup: str) -> str:
@@ -206,8 +219,8 @@ def _render_bbox_footer_html(
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span style="opacity:0.65; font-weight:500;">BBox Filter:</span>
             {pills_html}
-            <span style="display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:5px; background:rgba(29,78,216,0.14); color:#1D4ED8; border:1px solid rgba(29,78,216,0.35); font-family:'JetBrains Mono',monospace; font-size:11px;">
-                <span style="width:6px; height:6px; border-radius:50%; background:#2563EB;"></span> Violation ({violation_count})
+            <span style="display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:5px; background:{_rgba(VIOLATION_COLOR, 0.14)}; color:{VIOLATION_COLOR}; border:1px solid {_rgba(VIOLATION_COLOR, 0.35)}; font-family:'JetBrains Mono',monospace; font-size:11px;">
+                <span style="width:6px; height:6px; border-radius:50%; background:{VIOLATION_COLOR};"></span> Violation ({violation_count})
             </span>
         </div>
         <div style="font-family:'JetBrains Mono',monospace; font-size:11px; opacity:0.55;">
@@ -227,23 +240,13 @@ def _render_kpi_grid_html(
     high_threshold: float = 0.60,
     latency_ms: float = 18.4,
 ) -> str:
-    """Render the 4-column 2/3-tone Blue KPI Grid HTML."""
-    if "HIGH" in alert_level:
-        alert_color = "#1D4ED8"
-        alert_bg = "rgba(29,78,216,0.14)"
-        alert_icon = "shield"
-    elif "MEDIUM" in alert_level:
-        alert_color = "#2563EB"
-        alert_bg = "rgba(37,99,235,0.12)"
-        alert_icon = "warning"
-    elif "LOW" in alert_level:
-        alert_color = "#0284C7"
-        alert_bg = "rgba(2,132,199,0.12)"
-        alert_icon = "info"
-    else:
-        alert_color = "#0EA5E9"
-        alert_bg = "rgba(14,165,233,0.12)"
-        alert_icon = "check_circle"
+    """Render the 4-column KPI Grid HTML (red = error, amber = warning, green = safe)."""
+    style = alert_style_for(alert_level)
+    alert_color = style["hex"]
+    alert_bg = _rgba(alert_color, 0.14)
+    alert_icon = style["icon"]
+    ok_color = COMPLIANT_COLOR
+    haz_color = VIOLATION_COLOR
 
     return _html_fragment(f"""
     <div style="margin-top:22px; margin-bottom:22px;">
@@ -288,7 +291,7 @@ def _render_kpi_grid_html(
                 <div class="kpi-footer">
                     <span>Compliant / Violating:</span>
                     <span style="font-family:'JetBrains Mono',monospace; font-weight:600;">
-                        <span style="color:#0284C7;">{compliant_count} OK</span> / <span style="color:#1D4ED8; font-weight:700;">{violating_count} HAZ</span>
+                        <span style="color:{ok_color};">{compliant_count} OK</span> / <span style="color:{haz_color}; font-weight:700;">{violating_count} HAZ</span>
                     </span>
                 </div>
             </div>
@@ -297,12 +300,12 @@ def _render_kpi_grid_html(
             <div class="kpi-card">
                 <div class="kpi-card-top">
                     <span class="kpi-label">Max Severity Score</span>
-                    <div class="kpi-icon-box" style="background:rgba(37,99,235,0.12);">
-                        <span class="material-symbols-rounded" style="font-size:18px; color:#2563EB;">speed</span>
+                    <div class="kpi-icon-box" style="background:{alert_bg};">
+                        <span class="material-symbols-rounded" style="font-size:18px; color:{alert_color};">speed</span>
                     </div>
                 </div>
                 <div class="kpi-value-row">
-                    <span style="font-family:'JetBrains Mono',monospace; font-size:28px; font-weight:700; color:#2563EB;">{max_score:.2f}</span>
+                    <span style="font-family:'JetBrains Mono',monospace; font-size:28px; font-weight:700; color:{alert_color};">{max_score:.2f}</span>
                     <span style="font-family:'JetBrains Mono',monospace; font-size:11px; opacity:0.55;">/ 1.00 index</span>
                 </div>
                 <div class="kpi-footer">
@@ -339,13 +342,13 @@ def _render_incident_table_html(logs: List[Dict[str, Any]]) -> str:
     for item in logs[:6]:
         if item.get("is_violation"):
             badge_html = f"""
-            <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:9999px; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; background:rgba(37,99,235,0.14); color:#1D4ED8; border:1px solid rgba(37,99,235,0.30);">
-                <span class="material-symbols-rounded" style="font-size:13px;">warning</span> {item['status']}
+            <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:9999px; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; background:{_rgba(VIOLATION_COLOR, 0.14)}; color:{VIOLATION_COLOR}; border:1px solid {_rgba(VIOLATION_COLOR, 0.35)};">
+                <span class="material-symbols-rounded" style="font-size:13px;">error</span> {item['status']}
             </span>
             """
         else:
             badge_html = f"""
-            <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:9999px; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; background:rgba(14,165,233,0.12); color:#0284C7; border:1px solid rgba(14,165,233,0.30);">
+            <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:9999px; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; background:{_rgba(COMPLIANT_COLOR, 0.12)}; color:{COMPLIANT_COLOR}; border:1px solid {_rgba(COMPLIANT_COLOR, 0.30)};">
                 <span class="material-symbols-rounded" style="font-size:13px;">check_circle</span> {item['status']}
             </span>
             """
